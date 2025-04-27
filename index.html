@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+                 <html lang="en">
+                 <head>
+                     <title>AI Image Generator</title>
+                     <style>
+                         body {
+                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                             text-align: center;
+                             padding: 20px; /* Reduced padding */
+                             background-color: #1a1a1a;
+                             color: #f8f9fa;
+                             display: flex;
+                             flex-direction: column;
+                             align-items: center;
+                             justify-content: flex-start; /* Align items to the top */
+                             min-height: 80vh; /* Reduced minimum height */
+                             margin: 0;
+                             position: relative;
+                         }
+                         h1 {
+                             color: #00bfff;
+                             margin-bottom: 10px; /* Reduced margin */
+                         }
+                         .input-group {
+                             display: flex;
+                             gap: 10px;
+                             margin-bottom: 10px; /* Reduced margin */
+                             align-items: center;
+                         }
+                         label {
+                             font-weight: bold;
+                             color: #eee;
+                         }
+                         input[type="number"] {
+                             padding: 8px; /* Reduced padding */
+                             font-size: 16px;
+                             border: 1px solid #444;
+                             border-radius: 5px;
+                             background-color: #333;
+                             color: #eee;
+                             flex-grow: 1;
+                         }
+                         button {
+                             background-color: #00bfff;
+                             color: #1a1a1a;
+                             padding: 8px 16px; /* Reduced padding */
+                             font-size: 16px;
+                             border: none;
+                             border-radius: 5px;
+                             cursor: pointer;
+                             transition: background-color 0.3s ease;
+                         }
+                         button:hover {
+                             background-color: #0080ff;
+                         }
+                         #imageSection {
+                             display: none;
+                             margin-top: 15px; /* Reduced margin */
+                             width: 80%;
+                             text-align: center;
+                         }
+                         h2 {
+                             color: #90ee90;
+                             margin-bottom: 8px; /* Reduced margin */
+                         }
+                         img {
+                             border: 1px solid #555;
+                             max-width: 100%;
+                             max-height: 600px; /* Enlarged max-height to 600px */
+                             display: block;
+                             margin: 0 auto;
+                             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                             border-radius: 8px;
+                             object-fit: contain; /* Prevents image distortion */
+                         }
+                         .loading {
+                             border: 5px solid #f3f3f3;
+                             border-top: 5px solid #00bfff;
+                             border-radius: 50%;
+                             width: 30px; /* Reduced size */
+                             height: 30px; /* Reduced size */
+                             animation: spin 2s linear infinite;
+                             margin: 10px auto; /* Reduced margin */
+                             display: none;
+                         }
+
+                         @keyframes spin {
+                             0% { transform: rotate(0deg); }
+                             100% { transform: rotate(360deg); }
+                         }
+
+                         .footer {
+                             position: absolute;
+                             bottom: 10px;
+                             right: 20px;
+                             color: #777;
+                             font-size: 0.8em;
+                         }
+
+                         @media (max-width: 600px) {
+                             .input-group {
+                                 flex-direction: column;
+                                 width: 80%;
+                             }
+                             input[type="number"], button {
+                                 width: 100%;
+                                 margin-bottom: 10px;
+                             }
+                             #imageSection {
+                                 width: 95%;
+                             }
+                             .footer {
+                                 position: static;
+                                 text-align: center;
+                                 margin-top: 10px; /* Reduced margin */
+                                 right: auto;
+                                 left: auto;
+                             }
+                         }
+                     </style>
+                 </head>
+                 <body>
+                     <h1>AI Image Generator</h1>
+                     <br>
+
+                     <div class="input-group">
+                         <label for="seed">Enter Seed (Optional):</label>
+                         <input type="number" id="seed" placeholder="Leave blank for random">
+                         <button onclick="generateImage()">Generate Image</button>
+                     </div>
+
+                     <div id="imageSection">
+                         <h2>Generated Image:</h2>
+                         <div id="loadingIndicator" class="loading"></div>
+                         <img id="generatedImage" src="" alt="Generated Image" style="display: none;">
+                     </div>
+
+                     <div class="footer">
+                         Made by: Vidit and Sarthak
+                     </div>
+
+                     <script>
+                        function generateImage() {
+                             let seedInput = document.getElementById("seed");
+                             let seed = seedInput.value.trim();
+                             if (seed === "") {
+                                 seed = Math.floor(Math.random() * 10000); // Random if empty
+                             }
+
+                             const imageSection = document.getElementById("imageSection");
+                             const loadingIndicator = document.getElementById("loadingIndicator");
+                             const generatedImage = document.getElementById("generatedImage");
+
+                             imageSection.style.display = "block";
+                             generatedImage.style.display = "none"; // Hide image initially when generating
+                             loadingIndicator.style.display = "block"; // Show loading spinner
+
+                             generatedImage.src = "";
+                             generatedImage.alt = "Generating Image...";
+
+                             fetch(`http://127.0.0.1:5000/generate?seed=${seed}`)
+                                 .then(response => {
+                                     console.log("Response received:", response);
+                                     if (!response.ok) {
+                                         throw new Error(`HTTP error! Status: ${response.status}`);
+                                     }
+                                     return response.blob();
+                                 })
+                                 .then(imageBlob => {
+                                     let imageUrl = URL.createObjectURL(imageBlob);
+                                     generatedImage.src = imageUrl;
+                                     generatedImage.alt = "Generated Image";
+                                     generatedImage.style.display = "block"; // Show the image
+                                     loadingIndicator.style.display = "none"; // Hide loading spinner
+                                     console.log("Image updated successfully!");
+                                 })
+                                 .catch(error => {
+                                     console.error("Error loading image:", error);
+                                     generatedImage.alt = "Error loading image.";
+                                     generatedImage.src = ""; // Clear any potential broken image
+                                     generatedImage.style.display = "block"; // Still show the error message in the image area
+                                     loadingIndicator.style.display = "none"; // Hide loading spinner
+                                 });
+                         }
+                     </script>
+                 </body>
+                 </html>
